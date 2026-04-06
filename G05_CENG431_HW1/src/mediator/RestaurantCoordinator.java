@@ -68,12 +68,12 @@ public class RestaurantCoordinator implements IMediator {
                     System.out.printf("  [x] %s early-canceled by customer%n", order.getId());
                 } else {
                     // Forward to preparation area
-                    order.setCurrentState(OrderState.IN_PREPARATION);
                     prepArea.addOrder(order);
                 }
                 break;
 
             case PREPARATION_STARTED:
+            	order.setCurrentState(OrderState.IN_PREPARATION);
                 System.out.printf("  [~] %s preparation started (Chef %d)%n",
                         order.getId(), ((ChefWorker) sender).getChefId());
                 break;
