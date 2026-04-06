@@ -18,6 +18,7 @@ public class SimulationEngine {
     }
 
     public SimulationEngine(int totalTicks) {
+        model.Order.resetCounter();
         this.coordinator = new RestaurantCoordinator();
         this.currentTick = 0;
         this.totalTicks = totalTicks;

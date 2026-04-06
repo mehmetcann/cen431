@@ -61,6 +61,7 @@ public class RestaurantCoordinator implements IMediator {
     public void notify(Colleague sender, EventType event, Order order) {
         switch (event) {
             case EARLY_CANCELLATION:
+                allOrders.add(order);
                 order.setCurrentState(OrderState.CANCELED);
                 System.out.printf("  [x] %s early-canceled by customer%n", order.getId());
                 break;
@@ -146,13 +147,13 @@ public class RestaurantCoordinator implements IMediator {
      * Advances all components by one tick.
      */
     public void tickAll() {
-        receiver.updateTick();
-        tryAssignChefs();
+        deliverer.updateTick();
+        paymentProcessor.updateTick();
         for (ChefWorker chef : chefs) {
             chef.updateTick();
         }
         tryAssignChefs();
-        deliverer.updateTick();
+        receiver.updateTick();
     }
 
     @Override
@@ -195,7 +196,8 @@ public class RestaurantCoordinator implements IMediator {
             if (o.getDeliveryDetails().isDelayed()) {
                 delayedCount++;
             }
-            if (state == OrderState.IN_PREPARATION
+            if (state == OrderState.RECEIVED
+                    || state == OrderState.IN_PREPARATION
                     || state == OrderState.PREPARATION_COMPLETED
                     || state == OrderState.IN_DELIVERY) {
                 inProgress++;
