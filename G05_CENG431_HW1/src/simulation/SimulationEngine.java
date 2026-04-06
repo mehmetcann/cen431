@@ -1,6 +1,5 @@
 package simulation;
 
-import colleague.ChefWorker;
 import mediator.RestaurantCoordinator;
 
 /**
@@ -38,24 +37,10 @@ public class SimulationEngine {
         currentTick++;
         System.out.printf("%n--- Tick %d ---%n", currentTick);
 
-        // 1. Generate new orders
-        coordinator.getReceiver().updateTick();
+        // Advance all components
+        coordinator.tickAll();
 
-        // 2. Assign waiting orders to available chefs
-        coordinator.tryAssignChefs();
-
-        // 3. Chefs advance their current preparation
-        for (ChefWorker chef : coordinator.getChefs()) {
-            chef.updateTick();
-        }
-
-        // 4. Re-try assignment (chef may have finished above)
-        coordinator.tryAssignChefs();
-
-        // 5. Deliveries advance
-        coordinator.getDeliverer().updateTick();
-
-        // 6. Periodic status report every 2 ticks
+        // Periodic status report every 2 ticks
         if (currentTick % 2 == 0) {
             coordinator.printStatusReport();
         }

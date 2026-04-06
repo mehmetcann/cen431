@@ -3,15 +3,14 @@ package colleague;
 import event.EventType;
 import mediator.Colleague;
 import mediator.IMediator;
+import mediator.RestaurantCoordinator;
 import model.DeliveryDetails;
 import model.DeliveryState;
 import model.Order;
 import model.OrderState;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Manages multiple concurrent deliveries. Each delivery ticks independently.
@@ -22,12 +21,10 @@ public class DeliveryWorker extends Colleague {
     private static final double DELAY_PROB = 0.15;
 
     private final List<Order> deliveringOrders;
-    private final Random random;
 
     public DeliveryWorker(IMediator mediator) {
         super(mediator);
         this.deliveringOrders = new ArrayList<>();
-        this.random = new Random();
     }
 
     /**
@@ -38,7 +35,7 @@ public class DeliveryWorker extends Colleague {
         details.setDeliveryState(DeliveryState.IN_PROGRESS);
 
         // Determine delay at delivery start
-        if (random.nextDouble() < DELAY_PROB) {
+        if (((RestaurantCoordinator) mediator).getRandom().nextDouble() < DELAY_PROB) {
             details.applyDelay();
             mediator.notify(this, EventType.DELIVERY_DELAYED, order);
         }

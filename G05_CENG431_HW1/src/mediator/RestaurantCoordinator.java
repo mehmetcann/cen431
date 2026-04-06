@@ -8,6 +8,7 @@ import model.PaymentState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Central mediator that routes all events between colleagues.
@@ -20,6 +21,7 @@ public class RestaurantCoordinator implements IMediator {
 
     private final List<Order> allOrders;
     private double totalRevenue;
+    private final Random random;
 
     private final OrderReceiver receiver;
     private final PreparationArea prepArea;
@@ -30,6 +32,7 @@ public class RestaurantCoordinator implements IMediator {
     public RestaurantCoordinator() {
         this.allOrders = new ArrayList<>();
         this.totalRevenue = 0.0;
+        this.random = new Random();
 
         // Initialize all colleagues with this coordinator as mediator
         this.receiver = new OrderReceiver(this);
@@ -57,23 +60,21 @@ public class RestaurantCoordinator implements IMediator {
     @Override
     public void notify(Colleague sender, EventType event, Order order) {
         switch (event) {
+            case EARLY_CANCELLATION:
+                order.setCurrentState(OrderState.CANCELED);
+                System.out.printf("  [x] %s early-canceled by customer%n", order.getId());
+                break;
+
             case ORDER_CREATED:
                 allOrders.add(order);
                 System.out.printf("  [+] %s created ($%.2f, prep=%ds)%n",
                         order.getId(), order.getPrice(), order.getRemainingPrepTime());
-
-                // Early cancellation check
-                if (receiver.decideEarlyCancellation(order)) {
-                    order.setCurrentState(OrderState.CANCELED);
-                    System.out.printf("  [x] %s early-canceled by customer%n", order.getId());
-                } else {
-                    // Forward to preparation area
-                    prepArea.addOrder(order);
-                }
+                // Forward to preparation area
+                prepArea.addOrder(order);
                 break;
 
             case PREPARATION_STARTED:
-            	order.setCurrentState(OrderState.IN_PREPARATION);
+                order.setCurrentState(OrderState.IN_PREPARATION);
                 System.out.printf("  [~] %s preparation started (Chef %d)%n",
                         order.getId(), ((ChefWorker) sender).getChefId());
                 break;
@@ -113,10 +114,6 @@ public class RestaurantCoordinator implements IMediator {
                         order.getId(), order.getPrice());
                 break;
 
-            case ORDER_CANCELED:
-                // Hook for additional logging if needed
-                break;
-
             default:
                 break;
         }
@@ -143,6 +140,19 @@ public class RestaurantCoordinator implements IMediator {
                 chef.startPreparation(order);
             }
         }
+    }
+
+    /**
+     * Advances all components by one tick.
+     */
+    public void tickAll() {
+        receiver.updateTick();
+        tryAssignChefs();
+        for (ChefWorker chef : chefs) {
+            chef.updateTick();
+        }
+        tryAssignChefs();
+        deliverer.updateTick();
     }
 
     @Override
@@ -206,6 +216,10 @@ public class RestaurantCoordinator implements IMediator {
     }
 
     // ── Getters for SimulationEngine ──
+
+    public Random getRandom() {
+        return random;
+    }
 
     public OrderReceiver getReceiver() {
         return receiver;
